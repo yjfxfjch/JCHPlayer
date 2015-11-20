@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="960,600" caption="0,0,0,25" sizebox="0,0,0,0" mininfo="960,600"> <!-- 窗口的初始尺寸 -->
+    <VerticalLayout bkcolor="#FFd5d8de"> <!-- 整个窗口的背景 -->
+	
+	<HorizontalLayout name="title" height="25" bkcolor="#FFd7d7d7" > <!-- 标题栏背景色 bkcolor、bkcolor2、bkcolor3分别是渐变色的三个值-->
+	<Button name="logo"  width="25" height="25" normalimage=" file='logo.jpg'" />
+	<Button name="logotext"  width="120" text="JCHPlayer" align="center" />
+	<HorizontalLayout />
+	<HorizontalLayout width="90">
+		<Button name="minbtn"   tooltip="最小化"   normalimage=" file='img\btn_xiao_0.png' " hotimage=" file='img\btn_xiao_1.png' " pushedimage=" file='img\btn_xiao_2.png' "/>
+		<Button name="maxbtn"   tooltip="最大化"  normalimage=" file='img\btn_da_0.png' " hotimage=" file='img\btn_da_1.png' " pushedimage=" file='img\btn_da_2.png' " />
+        <Button name="restorebtn" visible="false" tooltip="还原"  normalimage=" file='img\btn_chuangkou_0.png' " hotimage=" file='img\btn_chuangkou_1.png' " pushedimage=" file='img\btn_chuangkou_2.png' " />
+		<Button name="closebtn" tooltip="关闭"     normalimage=" file='img\btn_close_0.png' " hotimage=" file='img\btn_close_1.png' " pushedimage=" file='img\btn_close_2.png' "/>
+	</HorizontalLayout>
+	</HorizontalLayout>
+	
+	<HorizontalLayout>
+		<VerticalLayout>
+	
+			<HorizontalLayout name="PlayWnd">
+			<Button name="MediaBkg" bkcolor="#FF5C6576"  visible="true" />
+			<WndMediaDisplay name="WndMedia" visible="false" />
+			</HorizontalLayout>
+	    
+		<PlayPanel height="75" />
+		</VerticalLayout>
+
+	<Playlist  width="225"/>
+	 </HorizontalLayout>
+	</VerticalLayout>
+	
+   
+	
+</Window>
