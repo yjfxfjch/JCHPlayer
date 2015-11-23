@@ -38,7 +38,7 @@ private:
 	BOOL AddPlayFile(WCHAR *folder);
 	int  GetPlayerNum();
 	int  MinUnPlayerNum();
-	int  GetMouseClickPlayer();
+	BOOL  IsClickPlayWnd();
 
 private:
 	vector<wstring>   m_vcPlayFile;			//²¥·ÅÎÄ¼þ

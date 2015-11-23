@@ -2,7 +2,7 @@
 <Window size="225,480"> 
 
     <VerticalLayout name="ctnPlaylist" bkcolor="#FFd5d8de">
-	<Button name="playlist" text="播放列表" bkcolor="#FFd7d7d7" height="20" tooltip="播放列表" />
+	<Button name="playlist" text="播放列表" bkcolor="#FFd5d8de" height="20" tooltip="播放列表" />
 	
 		<TreeView name="treePlaylist" childpadding="4" multipleitem="true" inset="4,0,3,0" bordersize="1" bordercolor="#FFadb6c6" itemtextcolor="#FFC8C6CB" itemhottextcolor="#FFC8C6CB" selitemtextcolor="#FFFFFFFF" itemhotbkcolor="#FF9b9da1" itemselectedbkcolor="#FFadb6c6" vscrollbar="true" hscrollbar="true" >
 		<!--	<TreeNode name="nodePlaylist" text="播放列表" height="33" itemattr="valign=&quot;vcenter&quot; font=&quot;1&quot; textpadding=&quot;12,0,0,0&quot;" folderattr="width=&quot;0&quot; float=&quot;true&quot;">

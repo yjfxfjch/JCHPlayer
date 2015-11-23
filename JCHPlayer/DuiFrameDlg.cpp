@@ -157,7 +157,7 @@ void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 	{
 		CControlUI *pBtnPlay = m_PaintManager.FindControl(_T("btnPlay"));
 		CControlUI *pbtnPause = m_PaintManager.FindControl(_T("btnPause"));
-		if (!m_myPlayer.IsPlaying())
+		if (!m_myPlayer.IsPlaying() && m_myPlayer.IsOpen())
 		{
 			m_myPlayer.Play();
 			pBtnPlay->SetVisible(FALSE);
@@ -187,10 +187,12 @@ void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 	}else if (msg.pSender->GetName() == _T("btnPlaylistShow"))
 	{
 		ShowPlaylist(TRUE);
+		m_bIsShowPlaylist = TRUE;
 	}
-	else if (msg.pSender->GetName() == _T("btnPlaylistHide") || msg.pSender->GetName() == _T("listclosebtn"))
+	else if (msg.pSender->GetName() == _T("btnPlaylistHide"))
 	{
 		ShowPlaylist(FALSE);
+		m_bIsShowPlaylist = FALSE;
 	}
 	else if (msg.pSender->GetName() == _T("btnVolume"))
 	{
@@ -219,6 +221,18 @@ void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 	{
 		m_myPlayer.SeekBackward();
 		::PostMessage(*this, WM_USER_POS_CHANGED, 0, m_myPlayer.GetPos());
+	}
+	else if (msg.pSender->GetName() == _T("btnStop"))
+	{
+		if (m_myPlayer.IsPlaying())
+		{
+			m_myPlayer.Stop();
+			CControlUI *pbtnWndBkg = m_PaintManager.FindControl(L"MediaBkg");
+			CControlUI *pbtnWnd = m_PaintManager.FindControl(L"WndMedia");
+			pbtnWndBkg->SetVisible(TRUE);
+			pbtnWnd->SetVisible(FALSE);
+		}
+		
 	}
 	
 	__super::OnClick(msg);
@@ -324,7 +338,6 @@ BOOL CDuiFrameDlg::AddPlayFile(WCHAR *folder)
 		pTreeList->Add(pNodeTmp);
 	}
 
-	ShowPlaylist(TRUE);
 	CControlUI *pbtnScreen = m_PaintManager.FindControl(_T("btnScreenFull"));
 	pbtnScreen->SetEnabled(true);
 
@@ -342,7 +355,6 @@ void CDuiFrameDlg::ShowPlaylist(BOOL show)
 	CControlUI *pbtnHide = m_PaintManager.FindControl(_T("btnPlaylistHide"));
 	CControlUI *pbtnShow = m_PaintManager.FindControl(_T("btnPlaylistShow"));
 	
-	m_bIsShowPlaylist = show;
 
 	if (pctnPlaylist && pbtnHide && pbtnShow/* && pctnSlider*/)
 	{
@@ -374,9 +386,13 @@ LRESULT CDuiFrameDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_LBUTTONDBLCLK:
 	{
-		SetFullScreen(m_bPingPong);
-		//用作全屏切换标识
-		m_bPingPong = !m_bPingPong;
+		if (IsClickPlayWnd())
+		{
+			SetFullScreen(m_bPingPong);
+			//用作全屏切换标识
+			m_bPingPong = !m_bPingPong;
+		}
+		
 	}
 	
 	}
@@ -393,23 +409,8 @@ void CDuiFrameDlg::Notify(TNotifyUI& msg)
 {
 	int index;
 	
-	if (msg.sType == DUI_MSGTYPE_ITEMSELECT)
-	{
-		CControlUI *pBtnPlay = m_PaintManager.FindControl(_T("WndMedia1"));
-		// 这里会传进来很多次双击消息，所以只获取祖先控件的消息
-		if (msg.pSender->GetParent() == pBtnPlay)
-		{
-			HWND hwnd = ::FindWindow(NULL, L"VLC (Direct3D output)");  //获取游戏 窗口标题
-			if (INVALID_HANDLE_VALUE != hwnd)
-			{
-				RECT rect = { 20,30,180,230 };;
-				::GetWindowRect(hwnd, &rect);
-				int x = rect.bottom;
-			}
-		}
-		
-	}
-	else if(msg.sType == DUI_MSGTYPE_ITEMACTIVATE)
+
+	if(msg.sType == DUI_MSGTYPE_ITEMACTIVATE)
 	{
 		CTreeViewUI* pTree = static_cast<CTreeViewUI*>(m_PaintManager.FindControl(_T("treePlaylist")));
 		CTreeNodeUI* pTreePlayChannel = static_cast<CTreeNodeUI*>(m_PaintManager.FindControl(_T("ctnPlayChannel")));
@@ -448,9 +449,11 @@ void CDuiFrameDlg::SetFullScreen(BOOL full)
 	CControlUI* pbtnFull = m_PaintManager.FindControl(_T("btnScreenFull"));
 	CControlUI* pbtnNormal = m_PaintManager.FindControl(_T("btnScreenNormal"));
 	CControlUI* pbtnTitle = m_PaintManager.FindControl(_T("title"));
+	CControlUI* pbtnPlayPanel = m_PaintManager.FindControl(_T("ctnPlayWnd"));
 	
 	int iBorderX = 0;
 	int iBorderY = 0;
+
 	if (pbtnFull && pbtnNormal)
 	{
 		m_bIsFullScreen = full;
@@ -471,10 +474,13 @@ void CDuiFrameDlg::SetFullScreen(BOOL full)
 		{
 			::SetWindowPlacement(*this, &m_OldWndPlacement);
 			::SetWindowPos(*this, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+			ShowPlaylist(m_bIsShowPlaylist);
 		}
+
 		pbtnTitle->SetVisible(!full);
 		pbtnNormal->SetVisible(full);
 		pbtnFull->SetVisible(!full);
+		pbtnPlayPanel->SetVisible(!full);
 	}
 }
 
@@ -557,7 +563,7 @@ BOOL CDuiFrameDlg::IsPointAtRect(POINT p, int rcl, int rct, int rcr, int rcb)
 功能：当前获取鼠标点击在哪个播放窗口
 */
 /************************************************************************/
-int  CDuiFrameDlg::GetMouseClickPlayer()
+int  CDuiFrameDlg::IsClickPlayWnd()
 {
 	POINT p;
 	GetCursorPos(&p);
@@ -569,42 +575,28 @@ int  CDuiFrameDlg::GetMouseClickPlayer()
 	{
 		rect.bottom -= 75;
 	}
-	if (m_bIsShowPlaylist)
+	if (m_bIsShowPlaylist && !m_bIsFullScreen)
 	{
 		rect.right -= 225;
 	}
 	
 	if (!m_bIsFullScreen)
 	{
-		rect.top += 25;
+		rect.top += 30;
 	}
 
 	//每个播放窗口单元长宽
-	int iUnitWidth = (rect.right - rect.left)/3;
-	int iUnitHeight = (rect.bottom - rect.top)/2;
+	int iPlayWndWidth = rect.right - rect.left;
+	int iPlayWndHeight = rect.bottom - rect.top;
 
 	//判断当前鼠标在哪个播放窗口
-	if(IsPointAtRect(p, rect.left+5, rect.top+5, rect.left+ iUnitWidth -5, rect.top+ iUnitHeight -5))
+	if(IsPointAtRect(p, rect.left, rect.top, rect.left + iPlayWndWidth, rect.top + iPlayWndHeight ))
 	{
-		return 1;
-	}else if (IsPointAtRect(p, rect.left+iUnitWidth+5, rect.top + 5, rect.left + iUnitWidth*2 - 5, rect.top + iUnitHeight-5))
-	{
-		return 2;
-	}else if (IsPointAtRect(p, rect.left+ iUnitWidth *2+5, rect.top + 5, rect.left + iUnitWidth*3 - 5, rect.top + iUnitHeight - 5))
-	{
-		return 3;
-	}else if (IsPointAtRect(p, rect.left + 5, rect.top+iUnitHeight+5, rect.left + iUnitWidth - 5, rect.top+ iUnitHeight*2 - 5))
-	{
-		return 4;
-	}else if (IsPointAtRect(p, rect.left + iUnitWidth + 5, rect.top + iUnitHeight+5, rect.left + iUnitWidth * 2 - 5, rect.top + iUnitHeight*2 - 5))
-	{
-		return 5;
-	}else if (IsPointAtRect(p, rect.left + iUnitWidth*2 + 5, rect.top + iUnitHeight + 5, rect.left + iUnitWidth * 3 - 5, rect.top + iUnitHeight * 2 - 5))
-	{
-		return 6;
+		return TRUE;
 	}
+	
 
-	return 0;
+	return FALSE;
 }
 
 std::string WstringToString(const std::wstring wstr)
@@ -629,9 +621,13 @@ void CALLBACK TimeProc(
 	UINT idTimer,
 	DWORD dwTime)
 {
+	//WCHAR *strWindwoName = L"JCHPlayer";
 	WCHAR *strWindwoName = L"JCHPlayer";
 	HWND hNMMainWnd = FindWindowEx(NULL, NULL, NULL, strWindwoName);
-	EnumChildWindows(hNMMainWnd, EnumerateVLC, NULL);
+	if (hNMMainWnd != NULL)
+	{
+		EnumChildWindows(hNMMainWnd, EnumerateVLC, NULL);
+	}
 }
 //枚举VLC窗口
 BOOL CALLBACK EnumerateVLC(HWND hWndvlc, LPARAM lParam) 
