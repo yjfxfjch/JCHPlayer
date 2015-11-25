@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <Window size="225,480"> 
 
-    <VerticalLayout name="ctnPlaylist" bkcolor="#FFd5d8de">
-	<Button name="playlist" text="播放列表" bkcolor="#FFd5d8de" height="20" tooltip="播放列表" />
-	
-		<TreeView name="treePlaylist" childpadding="4" multipleitem="true" inset="4,0,3,0" bordersize="1" bordercolor="#FFadb6c6" itemtextcolor="#FFC8C6CB" itemhottextcolor="#FFC8C6CB" selitemtextcolor="#FFFFFFFF" itemhotbkcolor="#FF9b9da1" itemselectedbkcolor="#FFadb6c6" vscrollbar="true" hscrollbar="true" >
-		<!--	<TreeNode name="nodePlaylist" text="播放列表" height="33" itemattr="valign=&quot;vcenter&quot; font=&quot;1&quot; textpadding=&quot;12,0,0,0&quot;" folderattr="width=&quot;0&quot; float=&quot;true&quot;">
-			</TreeNode>-->
-			
-			<TreeNode text="播放窗口" visible="false" name="ctnPlayChannel" visiheight="33"  bkimage="treeview_header.png" itemattr="valign=&quot;vcenter&quot; font=&quot;1&quot; textpadding=&quot;12,0,0,0&quot;" folderattr="width=&quot;0&quot; float=&quot;true&quot;">
-			</TreeNode>
-		</TreeView>
+    <VerticalLayout name="ctnPlaylist" bkcolor="#FF000000">
+	<Button name="playlist" text="播放列表" textcolor="#FFFFFFFF" bordersize="1" bordercolor="#FF2f2f2f" bkcolor="#FF1b1b1b" height="30" tooltip="播放列表" />
+	<HorizontalLayout>
+	<TreeView name="treePlaylist" childpadding="4" multipleitem="true" inset="4,0,3,0" bordersize="0" bordercolor="#FFadb6c6" itemtextcolor="#FF164f7d" itemhottextcolor="#FFC8C6CB" selitemtextcolor="#FFFFFFFF" itemhotbkcolor="#FF1b1b1b" itemselectedbkcolor="#FFadb6c6" font="18" vscrollbar="true" hscrollbar="true" >
+	</TreeView>
+	</HorizontalLayout>
 		
     </VerticalLayout>
 </Window>

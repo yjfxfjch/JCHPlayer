@@ -34,6 +34,7 @@ private:
 	void OpenFolderDlg();
 	void ShowPlaylist(BOOL show);
 	void SetFullScreen(BOOL full);
+	void SetListFocus(int index);
 	BOOL IsPointAtRect(POINT p, int rcl, int rct, int rcr, int rcb);
 	BOOL AddPlayFile(WCHAR *folder);
 	int  GetPlayerNum();
@@ -48,6 +49,7 @@ private:
 	BOOL m_bIsShowPlaylist;					//播放列表显示标识
 	int m_iMonitorWidth;					//显示器宽度
 	int m_iMonitorHeight;
+	int m_iSelectItemIndex;
 	CSliderUI       *m_pSliderPlay;			// 文件播放进度
 	CLabelUI        *m_pLabelTime;			// 文件播放时间
 	WINDOWPLACEMENT m_OldWndPlacement;		// 保存窗口原来的位置

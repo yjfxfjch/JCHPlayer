@@ -9,8 +9,6 @@
 #define WM_USER_POS_CHANGED     WM_USER + 2     // 文件播放位置改变
 #define WM_USER_END_REACHED     WM_USER + 3     // 播放完毕
 const UINT_PTR U_TAG_PLAYLIST = 1;
-std::string WstringToString(const std::wstring wstr);
-
 
 void CALLBACK TimeProc(
 	HWND hwnd,
@@ -18,6 +16,25 @@ void CALLBACK TimeProc(
 	UINT idTimer,
 	DWORD dwTime);
 BOOL CALLBACK EnumerateVLC(HWND hWndvlc, LPARAM lParam);
+
+std::string UnicodeConvert(const std::wstring& strWide, UINT uCodePage)
+{
+	std::string strANSI;
+	int iLen = ::WideCharToMultiByte(uCodePage, 0, strWide.c_str(), -1, NULL, 0, NULL, NULL);
+
+	if (iLen > 1)
+	{
+		strANSI.resize(iLen - 1);
+		::WideCharToMultiByte(uCodePage, 0, strWide.c_str(), -1, &strANSI[0], iLen, NULL, NULL);
+	}
+
+	return strANSI;
+}
+
+std::string UnicodeToUTF8(const std::wstring& strWide)
+{
+	return UnicodeConvert(strWide, CP_UTF8);
+}
 
 void CallbackPlayer(void *data, UINT uMsg)
 {
@@ -55,7 +72,8 @@ CDuiFrameDlg::CDuiFrameDlg(LPCTSTR pszXMLName)
 	m_bIsFullScreen(FALSE),
 	m_pSliderPlay(NULL),
 	m_bIsShowPlaylist(TRUE),
-	m_bPingPong(TRUE)
+	m_bPingPong(TRUE),
+	m_iSelectItemIndex(0)
 {
 
 }
@@ -71,16 +89,10 @@ void CDuiFrameDlg::InitWindow()
 	m_iMonitorWidth = info.rcMonitor.right - info.rcMonitor.left;
 	m_iMonitorHeight = info.rcMonitor.bottom - info.rcMonitor.top;
 
-
 	// 几个常用控件做为成员变量
 	CSliderUI* pSilderVol = static_cast<CSliderUI*>(m_PaintManager.FindControl(_T("sliderVol")));
 	m_pSliderPlay = static_cast<CSliderUI*>(m_PaintManager.FindControl(_T("sliderPlay")));
 	m_pLabelTime = static_cast<CLabelUI*>(m_PaintManager.FindControl(_T("labelPlayTime")));
-
-	if (!pSilderVol || !m_pSliderPlay || !m_pLabelTime)
-	{
-		return;
-	}
 
 	pSilderVol->OnNotify += MakeDelegate(this, &CDuiFrameDlg::OnVolumeChanged);
 	m_pSliderPlay->OnNotify += MakeDelegate(this, &CDuiFrameDlg::OnPosChanged);
@@ -98,7 +110,7 @@ void CDuiFrameDlg::InitWindow()
 
 CDuiFrameDlg::~CDuiFrameDlg()
 {
-
+	m_myPlayer.Stop();
 }
 
 DUI_BEGIN_MESSAGE_MAP(CDuiFrameDlg, CNotifyPump)
@@ -155,23 +167,19 @@ void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 {
 	if (msg.pSender->GetName() == _T("btnPlay"))
 	{
-		CControlUI *pBtnPlay = m_PaintManager.FindControl(_T("btnPlay"));
-		CControlUI *pbtnPause = m_PaintManager.FindControl(_T("btnPause"));
 		if (!m_myPlayer.IsPlaying() && m_myPlayer.IsOpen())
 		{
 			m_myPlayer.Play();
-			pBtnPlay->SetVisible(FALSE);
-			pbtnPause->SetVisible(TRUE);
+			m_PaintManager.FindControl(_T("btnPlay"))->SetVisible(FALSE);
+			m_PaintManager.FindControl(_T("btnPause"))->SetVisible(TRUE);
 		}
 		
 	}
 	else if (msg.pSender->GetName() == _T("btnPause"))
 	{
-		CControlUI *pBtnPlay = m_PaintManager.FindControl(_T("btnPlay"));
-		CControlUI *pbtnPause = m_PaintManager.FindControl(_T("btnPause"));
 		m_myPlayer.Pause();
-		pBtnPlay->SetVisible(TRUE);
-		pbtnPause->SetVisible(FALSE);
+		m_PaintManager.FindControl(_T("btnPlay"))->SetVisible(TRUE);
+		m_PaintManager.FindControl(_T("btnPause"))->SetVisible(FALSE);
 	}
 	else if (msg.pSender->GetName() == _T("btnScreenFull"))
 	{
@@ -209,8 +217,37 @@ void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 	}
 	else if (msg.pSender->GetName() == _T("btnNext"))
 	{
+		if (m_myPlayer.IsPlaying())
+		{
+			if (m_iSelectItemIndex == m_vcPlayFile.size()-1)
+			{
+				m_iSelectItemIndex = 0;
+			}
+			else
+			{
+				m_iSelectItemIndex++;
+			}
+			m_myPlayer.Play(UnicodeToUTF8(m_strFolderName + L"\\" + m_vcPlayFile[m_iSelectItemIndex]));
+			SetListFocus(m_iSelectItemIndex);
+			
+		}
 		
-
+	}else if (msg.pSender->GetName() == _T("btnPrevious"))
+	{
+		if (m_myPlayer.IsPlaying())
+		{
+			if (m_iSelectItemIndex == 0)
+			{
+				m_iSelectItemIndex = m_vcPlayFile.size() - 1;
+			}
+			else
+			{
+				m_iSelectItemIndex--;
+			}
+			m_myPlayer.Play(UnicodeToUTF8(m_strFolderName + L"\\" + m_vcPlayFile[m_iSelectItemIndex]));
+			SetListFocus(m_iSelectItemIndex);
+		}
+		
 	}
 	else if (msg.pSender->GetName() == _T("btnFastForward"))
 	{
@@ -227,10 +264,8 @@ void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 		if (m_myPlayer.IsPlaying())
 		{
 			m_myPlayer.Stop();
-			CControlUI *pbtnWndBkg = m_PaintManager.FindControl(L"MediaBkg");
-			CControlUI *pbtnWnd = m_PaintManager.FindControl(L"WndMedia");
-			pbtnWndBkg->SetVisible(TRUE);
-			pbtnWnd->SetVisible(FALSE);
+			m_PaintManager.FindControl(L"MediaBkg")->SetVisible(TRUE);
+			m_PaintManager.FindControl(L"WndMedia")->SetVisible(FALSE);
 		}
 		
 	}
@@ -245,15 +280,10 @@ void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 /************************************************************************/
 void CDuiFrameDlg::ShowPlayWnd(BOOL show)
 {
-
-	CControlUI *pbtnWnd = m_PaintManager.FindControl(L"WndMedia");
-	CControlUI *pbtnWndBkg = m_PaintManager.FindControl(L"MediaBkg");
-	if (pbtnWnd && pbtnWndBkg)
-	{
-		pbtnWnd->SetVisible(show);
-		pbtnWndBkg->SetVisible(!show);
-	}
-	
+	m_PaintManager.FindControl(L"WndMedia")->SetVisible(show);
+	m_PaintManager.FindControl(L"MediaBkg")->SetVisible(!show);
+	m_PaintManager.FindControl(_T("btnPlay"))->SetVisible(!show);
+	m_PaintManager.FindControl(_T("btnPause"))->SetVisible(show);
 }
 
 
@@ -326,21 +356,19 @@ BOOL CDuiFrameDlg::AddPlayFile(WCHAR *folder)
 	for (auto it = m_vcPlayFile.begin(); it != m_vcPlayFile.end();++it)
 	{
 		pNodeTmp = new CTreeNodeUI;
-		pNodeTmp->SetItemTextColor(0xFF000000);
-		pNodeTmp->SetItemHotTextColor(0xFFC8C6CB);
-		pNodeTmp->SetSelItemTextColor(0xFFFFFFFF);
+		pNodeTmp->SetItemTextColor(0xFF38a6ff);
+		pNodeTmp->SetItemHotTextColor(0xFF164f7d);
+		pNodeTmp->SetSelItemTextColor(0xFF164f7d);
 		pNodeTmp->SetTag(U_TAG_PLAYLIST);
 		pNodeTmp->SetItemText((*it).c_str());
-		pNodeTmp->SetAttribute(_T("height"), _T("23"));
+		pNodeTmp->SetAttribute(_T("height"), _T("25"));
 		pNodeTmp->SetAttribute(_T("inset"), _T("0,1,1,1"));
 		pNodeTmp->SetAttribute(_T("itemattr"), _T("valign=\"vcenter\" font=\"4\""));
 		pNodeTmp->SetAttribute(_T("folderattr"), _T("width=\"0\" float=\"true\""));
 		pTreeList->Add(pNodeTmp);
 	}
 
-	CControlUI *pbtnScreen = m_PaintManager.FindControl(_T("btnScreenFull"));
-	pbtnScreen->SetEnabled(true);
-
+	m_PaintManager.FindControl(_T("btnScreenFull"))->SetEnabled(true);
 	return iFileNum > 0 ? TRUE : FALSE;
 }
 
@@ -356,7 +384,7 @@ void CDuiFrameDlg::ShowPlaylist(BOOL show)
 	CControlUI *pbtnShow = m_PaintManager.FindControl(_T("btnPlaylistShow"));
 	
 
-	if (pctnPlaylist && pbtnHide && pbtnShow/* && pctnSlider*/)
+	if (pctnPlaylist && pbtnHide && pbtnShow)
 	{
 		pctnPlaylist->SetVisible(show);
 		pbtnHide->SetVisible(show);
@@ -392,9 +420,15 @@ LRESULT CDuiFrameDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			//用作全屏切换标识
 			m_bPingPong = !m_bPingPong;
 		}
-		
+		break;
 	}
 	
+	case WM_RBUTTONUP:
+		if (IsClickPlayWnd())
+		{
+			MessageBox(NULL, L"右键点击", NULL, NULL);
+		}
+		
 	}
 	return lRes;
 	
@@ -407,22 +441,17 @@ LRESULT CDuiFrameDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 /************************************************************************/
 void CDuiFrameDlg::Notify(TNotifyUI& msg)
 {
-	int index;
-	
-
 	if(msg.sType == DUI_MSGTYPE_ITEMACTIVATE)
 	{
 		CTreeViewUI* pTree = static_cast<CTreeViewUI*>(m_PaintManager.FindControl(_T("treePlaylist")));
 		CTreeNodeUI* pTreePlayChannel = static_cast<CTreeNodeUI*>(m_PaintManager.FindControl(_T("ctnPlayChannel")));
 		if (pTree && -1 != pTree->GetItemIndex(msg.pSender) && U_TAG_PLAYLIST == msg.pSender->GetTag())
 		{
-			index = pTree->GetItemIndex(msg.pSender);
+			m_iSelectItemIndex = pTree->GetItemIndex(msg.pSender);
 			ShowPlayWnd(TRUE);
-			m_myPlayer.Play(WstringToString(m_strFolderName + L"\\" + m_vcPlayFile[index]));
-
-		   SetTimer(NULL, 1, 1000, TimeProc);
-		
-			
+			m_myPlayer.Play(UnicodeToUTF8(m_strFolderName + L"\\" + m_vcPlayFile[m_iSelectItemIndex]));
+			SetListFocus(m_iSelectItemIndex);
+		    SetTimer(NULL, 1, 1000, TimeProc);
 		}
 
 	}
@@ -446,44 +475,53 @@ void CDuiFrameDlg::OnGetMinMaxInfo(HWND hwnd, LPMINMAXINFO lpMinMaxInfo)
 /************************************************************************/
 void CDuiFrameDlg::SetFullScreen(BOOL full)
 {
-	CControlUI* pbtnFull = m_PaintManager.FindControl(_T("btnScreenFull"));
-	CControlUI* pbtnNormal = m_PaintManager.FindControl(_T("btnScreenNormal"));
-	CControlUI* pbtnTitle = m_PaintManager.FindControl(_T("title"));
-	CControlUI* pbtnPlayPanel = m_PaintManager.FindControl(_T("ctnPlayWnd"));
-	
 	int iBorderX = 0;
 	int iBorderY = 0;
 
-	if (pbtnFull && pbtnNormal)
+	m_bIsFullScreen = full;
+
+	if (full)
 	{
-		m_bIsFullScreen = full;
-
-		if (full)
+		::GetWindowPlacement(*this, &m_OldWndPlacement);
+		if (::IsZoomed(*this))
 		{
-			::GetWindowPlacement(*this, &m_OldWndPlacement);
-			if (::IsZoomed(*this))
-			{
-				::ShowWindow(*this, SW_SHOWDEFAULT);
-			}
-
-			::SetWindowPos(*this, HWND_TOPMOST, -iBorderX, -iBorderY, GetSystemMetrics(SM_CXSCREEN) + 2 * iBorderX, GetSystemMetrics(SM_CYSCREEN) + 2 * iBorderY, 0);
-			ShowPlaylist(FALSE);
-			//ShowCursor(FALSE);
-		}
-		else
-		{
-			::SetWindowPlacement(*this, &m_OldWndPlacement);
-			::SetWindowPos(*this, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-			ShowPlaylist(m_bIsShowPlaylist);
+			::ShowWindow(*this, SW_SHOWDEFAULT);
 		}
 
-		pbtnTitle->SetVisible(!full);
-		pbtnNormal->SetVisible(full);
-		pbtnFull->SetVisible(!full);
-		pbtnPlayPanel->SetVisible(!full);
+		::SetWindowPos(*this, HWND_TOPMOST, -iBorderX, -iBorderY, GetSystemMetrics(SM_CXSCREEN) + 2 * iBorderX, GetSystemMetrics(SM_CYSCREEN) + 2 * iBorderY, 0);
+		ShowPlaylist(FALSE);
+		//ShowCursor(FALSE);
 	}
+	else
+	{
+		::SetWindowPlacement(*this, &m_OldWndPlacement);
+		::SetWindowPos(*this, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+		ShowPlaylist(m_bIsShowPlaylist);
+	}
+
+	m_PaintManager.FindControl(_T("title"))->SetVisible(!full);
+	m_PaintManager.FindControl(_T("btnScreenNormal"))->SetVisible(full);
+	m_PaintManager.FindControl(_T("btnScreenFull"))->SetVisible(!full);
+	m_PaintManager.FindControl(_T("ctnPlayWnd"))->SetVisible(!full);
 }
 
+
+void CDuiFrameDlg::SetListFocus(int index)
+{
+	CTreeViewUI* pTree = static_cast<CTreeViewUI*>(m_PaintManager.FindControl(_T("treePlaylist")));
+	CTreeNodeUI *pTemp;
+	for (int i = 0; i < m_vcPlayFile.size(); i++)
+	{
+		pTemp = static_cast<CTreeNodeUI*>(pTree->GetItemAt(i));
+		if (i == index)
+		{
+			pTemp->SetBkColor(0xFF2b2b2b);
+		}else
+		{
+			pTemp->SetBkColor(0xFF000000);
+		}
+	}
+}
 
 LRESULT CDuiFrameDlg::OnPosChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -537,13 +575,10 @@ bool CDuiFrameDlg::OnVolumeChanged(void* param)
 /************************************************************************/
 LRESULT CDuiFrameDlg::OnEndReached(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-	//Play(GetNextPath(true));
 	if (!m_myPlayer.IsPlaying())
 	{
-		CControlUI *pbtnWndBkg = m_PaintManager.FindControl(L"MediaBkg");
-		CControlUI *pbtnWnd = m_PaintManager.FindControl(L"WndMedia");
-		pbtnWndBkg->SetVisible(TRUE);
-		pbtnWnd->SetVisible(FALSE);
+		m_PaintManager.FindControl(L"MediaBkg")->SetVisible(TRUE);;
+		m_PaintManager.FindControl(L"WndMedia")->SetVisible(FALSE);
 	}
 	return TRUE;
 }
@@ -551,7 +586,7 @@ LRESULT CDuiFrameDlg::OnEndReached(HWND hwnd, WPARAM wParam, LPARAM lParam)
 //判断某个是否在给定矩形内
 BOOL CDuiFrameDlg::IsPointAtRect(POINT p, int rcl, int rct, int rcr, int rcb)
 {
-	if ((rcl<p.x && p.x< rcr) && (rct<p.y && p.y<rcb))
+	if ((rcl < p.x && p.x < rcr) && (rct < p.y && p.y < rcb))
 	{
 		return TRUE;
 	}
@@ -570,8 +605,7 @@ int  CDuiFrameDlg::IsClickPlayWnd()
 	RECT rect = { 0,0,0,0 };  
 	GetWindowRect(this->GetHWND(), &rect);
 
-	CControlUI* pbtnPlayPanel = m_PaintManager.FindControl(_T("ctnPlayWnd"));
-	if (pbtnPlayPanel->IsVisible())
+	if (m_PaintManager.FindControl(_T("ctnPlayWnd"))->IsVisible())
 	{
 		rect.bottom -= 75;
 	}
@@ -589,25 +623,15 @@ int  CDuiFrameDlg::IsClickPlayWnd()
 	int iPlayWndWidth = rect.right - rect.left;
 	int iPlayWndHeight = rect.bottom - rect.top;
 
-	//判断当前鼠标在哪个播放窗口
+	//判断当前鼠标是否在播放窗口
 	if(IsPointAtRect(p, rect.left, rect.top, rect.left + iPlayWndWidth, rect.top + iPlayWndHeight ))
 	{
 		return TRUE;
 	}
 	
-
 	return FALSE;
 }
 
-std::string WstringToString(const std::wstring wstr)
-{// wstring转string
-	std::string str;
-	for (auto it = wstr.begin();it != wstr.end();++it)
-	{
-		str.push_back(static_cast<char>(*it));
-	}
-	return str;
-}
 
 LRESULT CDuiFrameDlg::OnPlaying(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -621,7 +645,6 @@ void CALLBACK TimeProc(
 	UINT idTimer,
 	DWORD dwTime)
 {
-	//WCHAR *strWindwoName = L"JCHPlayer";
 	WCHAR *strWindwoName = L"JCHPlayer";
 	HWND hNMMainWnd = FindWindowEx(NULL, NULL, NULL, strWindwoName);
 	if (hNMMainWnd != NULL)
@@ -660,7 +683,7 @@ void CDuiFrameDlg::OnMouseMove()
 	{
 		//ShowCursor(TRUE);
 		CControlUI* pbtnPlay = m_PaintManager.FindControl(_T("ctnPlayWnd"));
-		if (p.y > (m_iMonitorHeight - 75))
+		if (p.y > (m_iMonitorHeight - 100))
 		{
 			pbtnPlay->SetVisible(TRUE);
 		}
