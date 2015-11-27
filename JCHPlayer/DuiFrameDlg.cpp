@@ -1,8 +1,9 @@
-#include "DuiFrameDlg.h"
 #include <windows.h>
 //选择文件夹对话框  
 #include<Shlobj.h>  
 #include <time.h>
+#include "DuiFrameDlg.h"
+#include "MenuWnd.h"
 #pragma comment(lib,"Shell32.lib")  
 
 #define WM_USER_PLAYING         WM_USER + 1     // 开始播放文件
@@ -197,7 +198,7 @@ void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 		ShowPlaylist(TRUE);
 		m_bIsShowPlaylist = TRUE;
 	}
-	else if (msg.pSender->GetName() == _T("btnPlaylistHide"))
+	else if (msg.pSender->GetName() == _T("btnPlaylistHide") || msg.pSender->GetName() == _T("btnSideHide"))
 	{
 		ShowPlaylist(FALSE);
 		m_bIsShowPlaylist = FALSE;
@@ -268,6 +269,18 @@ void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 			m_PaintManager.FindControl(L"WndMedia")->SetVisible(FALSE);
 		}
 		
+	}
+	else if (msg.pSender->GetName() == _T("logo"))
+	{
+		CMenuWnd *pMenu = new CMenuWnd(_T("menu.xml"));
+		POINT    pt = { msg.ptMouse.x, msg.ptMouse.y };
+		CDuiRect rc = msg.pSender->GetPos();
+
+		pt.x = rc.left;
+		pt.y = rc.bottom;
+		pMenu->Init(&m_PaintManager, pt);
+		pMenu->ShowWindow(TRUE);
+
 	}
 	
 	__super::OnClick(msg);
@@ -426,7 +439,12 @@ LRESULT CDuiFrameDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONUP:
 		if (IsClickPlayWnd())
 		{
-			MessageBox(NULL, L"右键点击", NULL, NULL);
+			POINT ptMouse;
+			GetCursorPos(&ptMouse);
+			CMenuWnd *pMenu = new CMenuWnd(_T("menu.xml"));
+			POINT    pt = {ptMouse.x, ptMouse.y };
+			pMenu->Init(&m_PaintManager, pt);
+			pMenu->ShowWindow(TRUE);
 		}
 		
 	}

@@ -160,11 +160,13 @@
   <ItemGroup>
     <ClCompile Include="DuiFrameDlg.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MenuWnd.cpp" />
     <ClCompile Include="player\AVPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DuiFrameDlg.h" />
     <ClInclude Include="duilib.h" />
+    <ClInclude Include="MenuWnd.h" />
     <ClInclude Include="player\AVPlayer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

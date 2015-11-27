@@ -4,9 +4,22 @@
     <VerticalLayout name="ctnPlaylist" bkcolor="#FF000000">
 	<Button name="playlist" text="播放列表" textcolor="#FFFFFFFF" bordersize="1" bordercolor="#FF2f2f2f" bkcolor="#FF1b1b1b" height="30" tooltip="播放列表" />
 	<HorizontalLayout>
+	
+	<VerticalLayout width="17" inset="0,50,0,0">
+	<HorizontalLayout />
+	<HorizontalLayout height="77">
+	<Button name="btnSideHide" tooltip="隐藏列表" normalimage="btn_suojing_1.png" hotimage="btn_suojing_2.png" pushedimage="btn_suojing_2.png" />
+	<Button name="btnSideShow" tooltip="显示列表" visible="false" normalimage="btn_dakai_1.png" hotimage="btn_dakai_2.png" pushedimage="btn_dakai_2.png" />
+	</HorizontalLayout>
+	<HorizontalLayout />
+	</VerticalLayout>
+	
+	
+	<HorizontalLayout>
 	<TreeView name="treePlaylist" childpadding="4" multipleitem="true" inset="4,0,3,0" bordersize="0" bordercolor="#FFadb6c6" itemtextcolor="#FF164f7d" itemhottextcolor="#FFC8C6CB" selitemtextcolor="#FFFFFFFF" itemhotbkcolor="#FF1b1b1b" itemselectedbkcolor="#FFadb6c6" font="18" vscrollbar="true" hscrollbar="true" >
 	</TreeView>
 	</HorizontalLayout>
 		
+	</HorizontalLayout>	
     </VerticalLayout>
 </Window>

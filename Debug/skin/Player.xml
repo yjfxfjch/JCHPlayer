@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Window size="960,580" caption="0,0,0,25" sizebox="0,0,0,0" mininfo="960,580"> <!-- 窗口的初始尺寸 -->
+<Window size="960,660" caption="0,0,0,25" sizebox="6,6,6,6" mininfo="960,660"> <!-- 窗口的初始尺寸 -->
     <VerticalLayout bkcolor="#FF000000"> <!-- 整个窗口的背景 -->
 	
 	<HorizontalLayout name="title" height="30" bkcolor="#FF1b1b1b" > <!-- 标题栏背景色 bkcolor、bkcolor2、bkcolor3分别是渐变色的三个值-->
-	<Button name="logo"  width="30" height="30" normalimage=" file='logo.jpg'" />
+	<HorizontalLayout width="5" />
+	<Button name="logo"  width="30" height="30" normalimage=" file='logo.png'" />
 	<Button name="logotext"  width="100" text="JCHPlayer" textcolor="#FFFFFFFF" align="center" />
 	<HorizontalLayout />
 	<HorizontalLayout width="90">
@@ -18,7 +19,7 @@
 		<VerticalLayout>
 	
 			<HorizontalLayout name="PlayWnd">
-			<Button name="MediaBkg" bkcolor="#FF5C6576"  visible="true" />
+			<Button name="MediaBkg" bkcolor="#FF2f2f2f" normalimage="playerbk.png" visible="true" />
 			<WndMediaDisplay name="WndMedia" visible="false" />
 			</HorizontalLayout>
 	    
