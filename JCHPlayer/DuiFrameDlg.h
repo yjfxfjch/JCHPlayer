@@ -14,7 +14,6 @@ public:
 	explicit CDuiFrameDlg(LPCTSTR pszXMLName);
 	~CDuiFrameDlg();
 
-
 	DUI_DECLARE_MESSAGE_MAP()
 	virtual void InitWindow();
 	virtual CControlUI* CreateControl(LPCTSTR pstrClassName);
@@ -37,10 +36,10 @@ private:
 	void SetListFocus(int index);
 	BOOL IsPointAtRect(POINT p, int rcl, int rct, int rcr, int rcb);
 	BOOL AddPlayFile(WCHAR *folder);
+	BOOL  IsClickPlayWnd();
 	int  GetPlayerNum();
 	int  MinUnPlayerNum();
-	BOOL  IsClickPlayWnd();
-
+	
 private:
 	vector<wstring>   m_vcPlayFile;			//播放文件
 	wstring m_strFolderName;				//播放文件夹
@@ -53,5 +52,5 @@ private:
 	CSliderUI       *m_pSliderPlay;			// 文件播放进度
 	CLabelUI        *m_pLabelTime;			// 文件播放时间
 	WINDOWPLACEMENT m_OldWndPlacement;		// 保存窗口原来的位置
-	CAVPlayer m_myPlayer;		//	播放器
+	CAVPlayer m_myPlayer;					//	播放器
 };

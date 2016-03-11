@@ -151,7 +151,8 @@ CControlUI* CDuiFrameDlg::CreateControl(LPCTSTR pstrClassName)
 
 	if (!strXML.IsEmpty())
 	{
-		CControlUI* pUI = builder.Create(strXML.GetData(), NULL, NULL, &m_PaintManager, NULL); // 这里必须传入m_PaintManager，不然子XML不能使用默认滚动条等信息。
+		// 这里必须传入m_PaintManager，不然子XML不能使用默认滚动条等信息
+		CControlUI* pUI = builder.Create(strXML.GetData(), NULL, NULL, &m_PaintManager, NULL); 
 		return pUI;
 	}
 
@@ -310,10 +311,10 @@ void CDuiFrameDlg::OpenFolderDlg()
 	BROWSEINFO bifolder;
 	WCHAR FileName[MAX_PATH];
 	ZeroMemory(&bifolder, sizeof(BROWSEINFO));
-	bifolder.hwndOwner = *this;              // 拥有者句柄  
-	bifolder.pszDisplayName = FileName;     // 存放目录路径缓冲区  
-	bifolder.lpszTitle = TEXT("请选择文件夹");    // 标题  
-	bifolder.ulFlags = BIF_NEWDIALOGSTYLE | BIF_EDITBOX; // 新的样式,带编辑框  
+	bifolder.hwndOwner = *this;								// 拥有者句柄  
+	bifolder.pszDisplayName = FileName;						// 存放目录路径缓冲区  
+	bifolder.lpszTitle = TEXT("请选择文件夹");				// 标题  
+	bifolder.ulFlags = BIF_NEWDIALOGSTYLE | BIF_EDITBOX;	// 新的样式,带编辑框  
 	LPITEMIDLIST idl = SHBrowseForFolder(&bifolder);
 
 	if (SHGetPathFromIDList(idl, FileName)) 
@@ -601,7 +602,7 @@ LRESULT CDuiFrameDlg::OnEndReached(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-//判断某个是否在给定矩形内
+//判断某点是否在给定矩形内
 BOOL CDuiFrameDlg::IsPointAtRect(POINT p, int rcl, int rct, int rcr, int rcb)
 {
 	if ((rcl < p.x && p.x < rcr) && (rct < p.y && p.y < rcb))

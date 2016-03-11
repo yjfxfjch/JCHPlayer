@@ -18,6 +18,7 @@ public:
     ~CAVPlayer(void);
 
     bool Play(const std::string &strPath);  // 播放路径为strPath的文件
+	bool PlayUrl(const std::string &strUrl); //播放url文件
     void Play ();                           // 播放
     void Pause();                           // 暂停
     void Stop ();                           // 停止

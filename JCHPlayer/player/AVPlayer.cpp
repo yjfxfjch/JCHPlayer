@@ -81,6 +81,47 @@ bool CAVPlayer::Play(const std::string &strPath)
     return bRet;
 }
 
+bool CAVPlayer::PlayUrl(const std::string &strUrl)
+{
+	if (!m_pVLC_Inst)
+	{
+		Init();
+	}
+
+	if (strUrl.empty() || !m_pVLC_Inst)
+	{
+		return false;
+	}
+
+	Stop();
+
+	bool bRet = false;
+	libvlc_media_t *m;
+
+	m = libvlc_media_new_location(m_pVLC_Inst, strUrl.c_str());
+
+	if (m)
+	{
+		if (m_pVLC_Player = libvlc_media_player_new_from_media(m))
+		{
+			libvlc_media_player_set_hwnd(m_pVLC_Player, m_hWnd);
+			libvlc_media_player_play(m_pVLC_Player);
+
+			// 事件管理
+			libvlc_event_manager_t *vlc_evt_man = libvlc_media_player_event_manager(m_pVLC_Player);
+			libvlc_event_attach(vlc_evt_man, libvlc_MediaPlayerPlaying, ::OnVLC_Event, this);
+			libvlc_event_attach(vlc_evt_man, libvlc_MediaPlayerPositionChanged, ::OnVLC_Event, this);
+			libvlc_event_attach(vlc_evt_man, libvlc_MediaPlayerEndReached, ::OnVLC_Event, this);
+			bRet = true;
+		}
+
+		libvlc_media_release(m);
+	}
+
+	return bRet;
+}
+
+
 void CAVPlayer::Stop()
 {
     if (m_pVLC_Player)
