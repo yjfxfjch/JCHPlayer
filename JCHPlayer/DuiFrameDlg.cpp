@@ -18,6 +18,7 @@ void CALLBACK TimeProc(
 	DWORD dwTime);
 BOOL CALLBACK EnumerateVLC(HWND hWndvlc, LPARAM lParam);
 
+//unicode to ansic
 std::string UnicodeConvert(const std::wstring& strWide, UINT uCodePage)
 {
 	std::string strANSI;
@@ -119,10 +120,10 @@ DUI_BEGIN_MESSAGE_MAP(CDuiFrameDlg, CNotifyPump)
 DUI_END_MESSAGE_MAP()
 
 
-/************************************************************************/
-/* 
-功能：创建自定义控件
-*/
+/************************************************************************
+* 
+* 功能：创建自定义控件
+*
 /************************************************************************/
 CControlUI* CDuiFrameDlg::CreateControl(LPCTSTR pstrClassName)
 {
@@ -160,10 +161,10 @@ CControlUI* CDuiFrameDlg::CreateControl(LPCTSTR pstrClassName)
 }
 
 
-/************************************************************************/
-/* 
-功能：按钮点击响应
-*/
+/************************************************************************
+* 
+* 功能：按钮点击响应
+*
 /************************************************************************/
 void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 {
@@ -287,12 +288,12 @@ void CDuiFrameDlg::OnClick(TNotifyUI& msg)
 	__super::OnClick(msg);
 }
 
+/************************************************************************
+* 
+* 功能：设置窗口开始播放
+*
 /************************************************************************/
-/* 
-功能：设置窗口开始播放
-*/
-/************************************************************************/
-void CDuiFrameDlg::ShowPlayWnd(BOOL show)
+void CDuiFrameDlg::ShowPlayWnd(bool show)
 {
 	m_PaintManager.FindControl(L"WndMedia")->SetVisible(show);
 	m_PaintManager.FindControl(L"MediaBkg")->SetVisible(!show);
@@ -301,20 +302,20 @@ void CDuiFrameDlg::ShowPlayWnd(BOOL show)
 }
 
 
-/************************************************************************/
-/* 
-功能：打开文件夹对话框
-*/
+/************************************************************************
+* 
+* 功能：打开文件夹对话框
+*
 /************************************************************************/
 void CDuiFrameDlg::OpenFolderDlg()
 {
 	BROWSEINFO bifolder;
 	WCHAR FileName[MAX_PATH];
 	ZeroMemory(&bifolder, sizeof(BROWSEINFO));
-	bifolder.hwndOwner = *this;								// 拥有者句柄  
-	bifolder.pszDisplayName = FileName;						// 存放目录路径缓冲区  
-	bifolder.lpszTitle = TEXT("请选择文件夹");				// 标题  
-	bifolder.ulFlags = BIF_NEWDIALOGSTYLE | BIF_EDITBOX;	// 新的样式,带编辑框  
+	bifolder.hwndOwner = *this;                          // 拥有者句柄  
+	bifolder.pszDisplayName = FileName;                  // 存放目录路径缓冲区  
+	bifolder.lpszTitle = TEXT("请选择文件夹");            // 标题  
+	bifolder.ulFlags = BIF_NEWDIALOGSTYLE | BIF_EDITBOX; // 新的样式,带编辑框  
 	LPITEMIDLIST idl = SHBrowseForFolder(&bifolder);
 
 	if (SHGetPathFromIDList(idl, FileName)) 
@@ -329,10 +330,10 @@ void CDuiFrameDlg::OpenFolderDlg()
 }
 
 
-/************************************************************************/
-/* 
-功能：向播放列表添加文件夹
-*/
+/************************************************************************
+* 功能：向播放列表添加文件夹
+* 输入：文件夹名称
+* 返回：是否有视频文件
 /************************************************************************/
 BOOL CDuiFrameDlg::AddPlayFile(WCHAR *folder)
 {
@@ -350,8 +351,8 @@ BOOL CDuiFrameDlg::AddPlayFile(WCHAR *folder)
 			if (!(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
 				wstring strFileName(data.cFileName);
-				if (-1 != strFileName.find(L"MP4") || -1 != strFileName.find(L"mp4") || -1 != strFileName.find(L"rmvb")
-					|| -1 != strFileName.find(L"mkv"))
+				if (-1 != strFileName.find(L".mp4") || -1 != strFileName.find(L".rmvb")
+					|| -1 != strFileName.find(L".mkv") ||- 1 != strFileName.find(L".avi"))
 				{
 					m_vcPlayFile.push_back(data.cFileName);
 					iFileNum++;
@@ -386,12 +387,12 @@ BOOL CDuiFrameDlg::AddPlayFile(WCHAR *folder)
 	return iFileNum > 0 ? TRUE : FALSE;
 }
 
+/************************************************************************
+* 功能：显示播放列表
+* 输入：是否显示
+* 返回：无
 /************************************************************************/
-/* 
-功能：显示播放列表
-*/
-/************************************************************************/
-void CDuiFrameDlg::ShowPlaylist(BOOL show)
+void CDuiFrameDlg::ShowPlaylist(bool show)
 {
 	CControlUI *pctnPlaylist = m_PaintManager.FindControl(_T("ctnPlaylist"));
 	CControlUI *pbtnHide = m_PaintManager.FindControl(_T("btnPlaylistHide"));
@@ -453,10 +454,10 @@ LRESULT CDuiFrameDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	
 }
 
-/************************************************************************/
-/* 
-功能：duilib自定义消息
-*/
+/************************************************************************
+* 功能：duilib自定义消息
+* 输入：
+* 返回：无
 /************************************************************************/
 void CDuiFrameDlg::Notify(TNotifyUI& msg)
 {
@@ -467,7 +468,7 @@ void CDuiFrameDlg::Notify(TNotifyUI& msg)
 		if (pTree && -1 != pTree->GetItemIndex(msg.pSender) && U_TAG_PLAYLIST == msg.pSender->GetTag())
 		{
 			m_iSelectItemIndex = pTree->GetItemIndex(msg.pSender);
-			ShowPlayWnd(TRUE);
+			ShowPlayWnd(true);
 			m_myPlayer.Play(UnicodeToUTF8(m_strFolderName + L"\\" + m_vcPlayFile[m_iSelectItemIndex]));
 			SetListFocus(m_iSelectItemIndex);
 		    SetTimer(NULL, 1, 1000, TimeProc);
@@ -487,12 +488,12 @@ void CDuiFrameDlg::OnGetMinMaxInfo(HWND hwnd, LPMINMAXINFO lpMinMaxInfo)
 }
 
 
+/************************************************************************
+* 功能：设置全屏
+* 输入：是否全屏
+* 返回：无
 /************************************************************************/
-/* 
-功能：设置全屏
-*/
-/************************************************************************/
-void CDuiFrameDlg::SetFullScreen(BOOL full)
+void CDuiFrameDlg::SetFullScreen(bool full)
 {
 	int iBorderX = 0;
 	int iBorderY = 0;
@@ -508,7 +509,7 @@ void CDuiFrameDlg::SetFullScreen(BOOL full)
 		}
 
 		::SetWindowPos(*this, HWND_TOPMOST, -iBorderX, -iBorderY, GetSystemMetrics(SM_CXSCREEN) + 2 * iBorderX, GetSystemMetrics(SM_CYSCREEN) + 2 * iBorderY, 0);
-		ShowPlaylist(FALSE);
+		ShowPlaylist(false);
 		//ShowCursor(FALSE);
 	}
 	else
@@ -524,12 +525,16 @@ void CDuiFrameDlg::SetFullScreen(BOOL full)
 	m_PaintManager.FindControl(_T("ctnPlayWnd"))->SetVisible(!full);
 }
 
-
+/************************************************************************
+* 功能：设置播放列表焦点显示
+* 输入：列表索引
+* 返回：无
+/************************************************************************/
 void CDuiFrameDlg::SetListFocus(int index)
 {
 	CTreeViewUI* pTree = static_cast<CTreeViewUI*>(m_PaintManager.FindControl(_T("treePlaylist")));
 	CTreeNodeUI *pTemp;
-	for (int i = 0; i < m_vcPlayFile.size(); i++)
+	for (UINT i = 0; i < m_vcPlayFile.size(); i++)
 	{
 		pTemp = static_cast<CTreeNodeUI*>(pTree->GetItemAt(i));
 		if (i == index)
@@ -568,7 +573,8 @@ bool CDuiFrameDlg::OnPosChanged(void* param)
 
 	if (pMsg->sType == _T("valuechanged"))
 	{
-		m_myPlayer.SeekTo((static_cast<CSliderUI*>(pMsg->pSender))->GetValue() + 1); // 获取的值少了1，导致设置的值也少了1，所以这里+1
+		// 获取的值少了1，导致设置的值也少了1，所以这里+1
+		m_myPlayer.SeekTo((static_cast<CSliderUI*>(pMsg->pSender))->GetValue() + 1); 
 	}
 
 	return true;
@@ -587,10 +593,8 @@ bool CDuiFrameDlg::OnVolumeChanged(void* param)
 	return true;
 }
 
-/************************************************************************/
-/* 
-功能：文件播放结束
-*/
+/************************************************************************
+* 功能：文件播放结束
 /************************************************************************/
 LRESULT CDuiFrameDlg::OnEndReached(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -612,12 +616,12 @@ BOOL CDuiFrameDlg::IsPointAtRect(POINT p, int rcl, int rct, int rcr, int rcb)
 	return FALSE;
 }
 
+/************************************************************************
+* 功能：当前获取鼠标点击在哪个播放窗口
+* 输入：无
+* 返回：TRUR or FALSE
 /************************************************************************/
-/* 
-功能：当前获取鼠标点击在哪个播放窗口
-*/
-/************************************************************************/
-int  CDuiFrameDlg::IsClickPlayWnd()
+BOOL CDuiFrameDlg::IsClickPlayWnd()
 {
 	POINT p;
 	GetCursorPos(&p);
@@ -676,28 +680,28 @@ BOOL CALLBACK EnumerateVLC(HWND hWndvlc, LPARAM lParam)
 {
 	TCHAR szWndTitle[1024];
 	int nLen = GetWindowText(hWndvlc, szWndTitle, 1024);
-	if (0!= nLen)
+	if (0 != nLen)
 	{
 		//禁用鼠标消息
 		EnableWindow(hWndvlc, FALSE);
+		KillTimer(NULL, 1);
 	}
-	KillTimer(NULL, 1);
+	
 	return TRUE;
 }
 
 
-/************************************************************************/
-/* 
-功能:鼠标移动消息监听，主要用于全屏时隐藏播放面板
-*/
+/************************************************************************
+* 功能: 鼠标移动消息监听，主要用于全屏时隐藏播放面板
+* 输入：无
+* 返回：无
 /************************************************************************/
 void CDuiFrameDlg::OnMouseMove()
 {
 	POINT p;
 	GetCursorPos(&p);
 	ScreenToClient(NULL, &p);
-	RECT rect = { 0,0,0,0 }; 
-	GetWindowRect(this->GetHWND(),&rect);
+
 	if (m_bIsFullScreen)
 	{
 		//ShowCursor(TRUE);
